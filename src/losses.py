@@ -10,8 +10,8 @@ def binary_cross_entropy(logits: jnp.ndarray, labels: jnp.ndarray) -> jnp.ndarra
     return -jnp.sum(labels * logits + (1. - labels) * jnp.log(-jnp.expm1(logits)))
 
 
-def kl_divergence_analytic(mu: jnp.ndarray, logvar: jnp.ndarray) -> jnp.ndarray:
-    return -0.5 * jnp.sum(1 + logvar - jnp.square(mu) - jnp.exp(logvar))
+def kl_divergence_analytic(mu: jnp.ndarray, sigma: jnp.ndarray) -> jnp.ndarray:
+    return -0.5 * jnp.sum(1 + 2 * jnp.log(sigma) - mu ** 2 - sigma ** 2)
 
 
 def kl_divergence(p: jnp.ndarray, q: jnp.ndarray) -> jnp.ndarray:

@@ -1,0 +1,8 @@
+train.model = @GAN()
+
+GAN.n_gen_filters = 128
+GAN.n_gen_layers = 2
+GAN.n_disc_filters = 32
+GAN.n_disc_layers = 2
+GAN.n_latent_dims = 2
+GAN.output_shape = (28, 28, 1)

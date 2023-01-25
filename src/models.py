@@ -96,3 +96,35 @@ class MarkovianHVAE(nn.Module):
         y_hat = self.g_thetas[-1](z)
 
         return y_hat, z_T, z_from_q, z_from_g, mu, sigma
+
+
+@gin.configurable
+class GAN(nn.Module):
+    n_gen_filters: int
+    n_gen_layers: int
+    n_disc_filters: int
+    n_disc_layers: int
+    n_latent_dims: int
+    output_shape: Sequence[int] = (28, 28, 1)
+
+    def setup(self):
+        self.generator = MLPDecoder(self.n_gen_layers, self.n_gen_filters, self.output_shape)
+        self.discriminator = MLPDiscriminator(self.n_disc_layers, self.n_disc_filters)
+
+    def sample(self, z: jnp.ndarray) -> jnp.ndarray:
+        n, n_latent_dims = z.shape
+        assert n_latent_dims == self.n_latent_dims
+
+        y_hat = self.generator(z)
+        return y_hat
+
+    def __call__(
+            self, y: jnp.ndarray, rng: jax.random.PRNGKey
+    ) -> Sequence[jnp.ndarray]:
+        z = jax.random.normal(rng, (y.shape[0], self.n_latent_dims))
+        y_hat = self.generator(z)
+
+        d_real = self.discriminator(y)
+        d_fake = self.discriminator(y_hat)
+
+        return y_hat, d_real, d_fake

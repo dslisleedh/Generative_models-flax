@@ -49,3 +49,17 @@ class MLPDecoder(nn.Module):
 
         return y_hat
 
+
+class MLPDiscriminator(nn.Module):
+    n_layers: int
+    n_filters: int | Sequence[int]
+
+    @nn.compact
+    def __call__(self, x):
+        for _ in range(self.n_layers):
+            x = nn.Dense(self.n_filters)(x)
+            x = nn.relu(x)
+
+        y_hat = nn.Dense(1)(x)
+
+        return y_hat
