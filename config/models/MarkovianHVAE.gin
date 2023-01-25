@@ -1,0 +1,7 @@
+train.model = @MarkovianHVAE()
+
+MarkovianHVAE.n_layers = 2
+MarkovianHVAE.n_filters = 128
+MarkovianHVAE.n_latent_dims = 2
+MarkovianHVAE.output_shape = (28, 28, 1)
+MarkovianHVAE.n_steps = 3

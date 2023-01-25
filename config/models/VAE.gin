@@ -1,0 +1,6 @@
+train.model = @VAE()
+
+VAE.n_layers = 2
+VAE.n_filters = 128
+VAE.n_latent_dims = 2
+VAE.output_shape = (28, 28, 1)
