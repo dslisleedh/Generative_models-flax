@@ -59,7 +59,7 @@ class MarkovianHVAE(nn.Module):
             MLPEncoder(self.n_layers, self.n_filters, self.n_latent_dims) for _ in range(self.n_steps)
         ]
         self.g_thetas = [
-            MLPDecoder(self.n_layers, self.n_filters, (self.n_latent_dims,)) for _ in range(self.n_steps - 1)
+            MLPEncoder(self.n_layers, self.n_filters, self.n_latent_dims) for _ in range(self.n_steps - 1)
         ] + [
             MLPDecoder(self.n_layers, self.n_filters, self.output_shape)
         ]
@@ -90,7 +90,9 @@ class MarkovianHVAE(nn.Module):
         z_T = z.copy()
 
         for g_theta in self.g_thetas[:-1]:
-            z = g_theta(z)
+            mu, logvar = g_theta(z)
+            sigma = jnp.exp(.5 * logvar)
+            z = reparameterization(rngs[-1], mu, sigma)
             z_from_g.append(z)
 
         y_hat = self.g_thetas[-1](z)
