@@ -15,11 +15,10 @@ def vae_training_step(state, batch):
     y = jnp.array(y, dtype=jnp.float32)
 
     def loss_fn(params):
-        logits, z_T, z_from_q, z_from_g, mu, sigma = state.apply_fn(params, x)
+        logits, z, mu, sigma = state.apply_fn(params, x)
         recon_loss = binary_cross_entropy(logits, y)
         kl_loss = kl_divergence(mu, sigma)
-        consist_loss = consistency_loss(z_from_q, z_from_g)
-        loss = recon_loss + kl_loss + consist_loss  # Maybe use lambda to weight the consistency loss?
+        loss = recon_loss + kl_loss
         return loss, recon_loss, kl_loss
 
     grad_fn = jax.value_and_grad(loss_fn, has_aux=True)
@@ -37,10 +36,11 @@ def mhvae_training_step(state, batch):
     y = jnp.array(y, dtype=jnp.float32)
 
     def loss_fn(params):
-        logits, z_T, z_from_q, mu, sigma  = state.apply_fn(params, x)
+        logits, z_T, z_from_q, z_from_g, mu, sigma = state.apply_fn(params, x)
         recon_loss = binary_cross_entropy(logits, y)
         kl_loss = kl_divergence(mu, sigma)
-        loss = recon_loss + kl_loss
+        consist_loss = consistency_loss(z_from_q, z_from_g)
+        loss = recon_loss + kl_loss + consist_loss  # Maybe use lambda to weight the consistency loss?
         return loss, recon_loss, kl_loss
 
     grad_fn = jax.value_and_grad(loss_fn, has_aux=True)
