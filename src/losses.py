@@ -15,7 +15,7 @@ def kl_divergence_analytic(mu: jnp.ndarray, sigma: jnp.ndarray) -> jnp.ndarray:
 
 
 def kl_divergence(p: jnp.ndarray, q: jnp.ndarray) -> jnp.ndarray:
-    log_div = jnp.log(q / p)
+    log_div = jnp.log(p / q)
     return jnp.sum(p * log_div, axis=-1)
 
 
