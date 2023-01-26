@@ -84,9 +84,9 @@ class MarkovianHVAE(nn.Module):
             z = reparameterization(r, mu, sigma)
             z_from_q.append(z)
 
-        mu, logvar = self.q_phis[-1](z)
-        sigma = jnp.exp(.5 * logvar)
-        z = reparameterization(rngs[-1], mu, sigma)
+        mu_T, logvar_T = self.q_phis[-1](z)
+        sigma_T = jnp.exp(.5 * logvar_T)
+        z = reparameterization(rngs[-1], mu_T, sigma_T)
         z_T = z.copy()
 
         for g_theta in self.g_thetas[:-1]:
@@ -97,7 +97,7 @@ class MarkovianHVAE(nn.Module):
 
         y_hat = self.g_thetas[-1](z)
 
-        return y_hat, z_T, z_from_q, z_from_g, mu, sigma
+        return y_hat, z_T, z_from_q, z_from_g, mu_T, sigma_T
 
 
 @gin.configurable
