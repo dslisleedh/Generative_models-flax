@@ -27,5 +27,5 @@ def consistency_loss(*args):
     return loss
 
 
-def diffusion_loss(eps_theta: jnp.ndarray, eps_t: jnp.ndarray):
-    return jnp.mean(jnp.sum((eps_t - eps_theta) ** 2, axis=-1))
+def diffusion_loss(eps: jnp.ndarray, eps_pred: jnp.ndarray):
+    return jnp.mean(jnp.sum((eps - eps_pred) ** 2, axis=-1))

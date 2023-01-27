@@ -9,14 +9,12 @@ from src.losses import *
 
 
 @gin.configurable
-def vae_training_step(state, batch):
-    x, y = batch
+def vae_training_step(state, x):
     x = jnp.array(x, dtype=jnp.float32)
-    y = jnp.array(y, dtype=jnp.float32)
 
     def loss_fn(params):
         logits, z, mu, sigma = state.apply_fn(params, x)
-        recon_loss = binary_cross_entropy(logits, y)
+        recon_loss = binary_cross_entropy(logits, x)
         kl_loss = kl_divergence(mu, sigma)
         loss = recon_loss + kl_loss
         return loss, recon_loss, kl_loss
@@ -30,14 +28,12 @@ def vae_training_step(state, batch):
 
 
 @gin.configurable
-def mhvae_training_step(state, batch):
-    x, y = batch
+def mhvae_training_step(state, x):
     x = jnp.array(x, dtype=jnp.float32)
-    y = jnp.array(y, dtype=jnp.float32)
 
     def loss_fn(params):
         logits, z_T, z_from_q, z_from_g, mu, sigma = state.apply_fn(params, x)
-        recon_loss = binary_cross_entropy(logits, y)
+        recon_loss = binary_cross_entropy(logits, x)
         kl_loss = kl_divergence(mu, sigma)
         consist_loss = consistency_loss(z_from_q, z_from_g)
         loss = recon_loss + kl_loss + consist_loss  # Maybe use lambda to weight the consistency loss?
@@ -49,3 +45,20 @@ def mhvae_training_step(state, batch):
     state = state.apply_gradients(grads=grads)
 
     return state, (loss, recon_loss, kl_loss)
+
+
+@gin.configurable
+def diffusion_training_step(state, x, rng):
+    x = jnp.array(x, dtype=jnp.float32)
+
+    def loss_fn(params):
+        predicted_noise, eps = state.apply_fn(params, x, rng)
+        loss = diffusion_loss(eps, predicted_noise)
+        return loss
+
+    grad_fn = jax.value_and_grad(loss_fn)
+    loss, grads = grad_fn(state.params)
+
+    state = state.apply_gradients(grads=grads)
+
+    return state, loss
