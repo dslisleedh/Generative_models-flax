@@ -1,0 +1,8 @@
+train.model = @Diffusion()
+
+Diffusion.n_filters = 32
+Diffusion.t = 1000
+Diffusion.pos_enc_dim = 32
+Diffusion.b_start = 1e-4
+Diffusion.b_end = 0.02
+Diffusion.beta_schedule = @linear_beta_schedule

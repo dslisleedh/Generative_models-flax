@@ -12,6 +12,7 @@ from flax import linen as nn
 import einops
 
 from typing import Sequence
+from tqdm import tqdm
 
 from src.layers import *
 from src.utils import *
@@ -130,3 +131,58 @@ class GAN(nn.Module):
         d_fake = self.discriminator(y_hat)
 
         return y_hat, d_real, d_fake
+
+
+@gin.configurable
+class Diffusion(nn.Module):
+    n_filters: Sequence[int] = 32
+    t: int = 100
+    pos_enc_dim: int = 32
+    b_start: float = 1e-4
+    b_end: float = 0.02
+    beta_schedule: callable = linear_beta_schedule
+
+    def sample_t(self, rng, n) -> jnp.ndarray:
+        return jax.random.randint(rng, (n,), 0, self.t)
+
+    def noise_image(self, rng, x, t):
+        eps = jax.random.normal(rng, shape=x.shape)
+        sqrt_alpha = jnp.sqrt(self.alpha_hat[t])[:, jnp.newaxis, jnp.newaxis, jnp.newaxis]
+        sqrt_one_minus_alpha_hat = jnp.sqrt(1. - self.alpha_hat[t])[:, jnp.newaxis, jnp.newaxis, jnp.newaxis]
+        return sqrt_alpha * x + sqrt_one_minus_alpha_hat * eps, eps
+
+    def setup(self):
+        self.d_unet = UNet(self.n_filters, self.pos_enc_dim)
+        self.betas = self.beta_schedule(self.b_start, self.b_end, self.t)
+        self.alpha = 1. - self.betas
+        self.alpha_hat = jnp.cumprod(self.alpha)
+
+    def sample(self, z, rng):
+        for i in tqdm(reversed(range(1, self.t))):
+            t = jnp.ones(z.shape[0]) * i
+            predicted_noise = self.d_unet(z, t)
+            alpha = self.alpha_hat[t][:, jnp.newaxis, jnp.newaxis, jnp.newaxis]
+            alpha_hat = self.alpha_hat[t][:, jnp.newaxis, jnp.newaxis, jnp.newaxis]
+            beta = self.beta[t]
+
+            if i > 1:
+                noise = jax.random.normal(rng, shape=z.shape)
+            else:
+                noise = jnp.zeros_like(z)
+
+            rng = jax.random.fold_in(i, rng)
+
+            z = 1 / jnp.sqrt(alpha) * (z - ((1 - alpha) / (jnp.sqrt(1 - alpha_hat))) * predicted_noise)\
+                + jnp.sqrt(beta) * noise
+
+        return z
+
+    def __call__(self, x, rng):
+        t_rng, eps_rng = jax.random.split(rng)
+
+        t = self.sample_t(t_rng, x.shape[0])
+        noise, eps = self.noise_image(eps_rng, x, t)
+
+        predicted_noise = self.d_unet(noise, t)
+
+        return predicted_noise, eps

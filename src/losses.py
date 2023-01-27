@@ -25,3 +25,7 @@ def consistency_loss(*args):
         loss.append(kl_divergence(arg[0], arg[1]))
     loss = jnp.mean(jnp.sum(jnp.stack(loss, axis=0), axis=0), axis=0)
     return loss
+
+
+def diffusion_loss(eps_theta: jnp.ndarray, eps_t: jnp.ndarray):
+    return jnp.mean(jnp.sum((eps_t - eps_theta) ** 2, axis=-1))
