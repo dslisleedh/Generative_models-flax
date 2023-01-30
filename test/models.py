@@ -7,16 +7,14 @@ import gin
 import jax
 import jax.numpy as jnp
 
+from test.utils import train
+
+
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-
-
-@gin.configurable
-def train(model):  # For consistency with actual training function
-    return model
 
 
 if __name__ == '__main__':

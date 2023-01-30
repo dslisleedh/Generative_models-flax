@@ -29,7 +29,7 @@ class VAE(nn.Module):
         self.q_phi = MLPEncoder(self.n_layers, self.n_filters, self.n_latent_dims)
         self.g_theta = MLPDecoder(self.n_layers, self.n_filters, self.output_shape)
 
-    def sample(self, z: jnp.ndarray) -> jnp.ndarray:
+    def sample(self, z: jnp.ndarray, **kwargs) -> jnp.ndarray:
         n, n_latent_dims = z.shape
         assert n_latent_dims == self.n_latent_dims
         y_hat = self.g_theta(z)
@@ -65,7 +65,7 @@ class MarkovianHVAE(nn.Module):
             MLPDecoder(self.n_layers, self.n_filters, self.output_shape)
         ]
 
-    def sample(self, z: jnp.ndarray) -> jnp.ndarray:
+    def sample(self, z: jnp.ndarray, **kwargs) -> jnp.ndarray:
         n, n_latent_dims = z.shape
         assert n_latent_dims == self.n_latent_dims
         for g_theta in self.g_thetas[:-1]:
@@ -114,7 +114,7 @@ class GAN(nn.Module):
         self.generator = MLPDecoder(self.n_gen_layers, self.n_gen_filters, self.output_shape)
         self.discriminator = MLPDiscriminator(self.n_disc_layers, self.n_disc_filters)
 
-    def sample(self, z: jnp.ndarray) -> jnp.ndarray:
+    def sample(self, z: jnp.ndarray, **kwargs) -> jnp.ndarray:
         n, n_latent_dims = z.shape
         assert n_latent_dims == self.n_latent_dims
 
@@ -146,9 +146,11 @@ class Diffusion(nn.Module):
         return jax.random.randint(rng, (n,), 0, self.t)
 
     def noise_image(self, rng, x, t):
-        eps = jax.random.normal(rng, shape=x.shape)
-        sqrt_alpha = jnp.sqrt(self.alpha_hat[t])[:, jnp.newaxis, jnp.newaxis, jnp.newaxis]
-        sqrt_one_minus_alpha_hat = jnp.sqrt(1. - self.alpha_hat[t])[:, jnp.newaxis, jnp.newaxis, jnp.newaxis]
+        shape = x.shape
+        eps = jax.random.normal(rng, shape=shape)
+        expand_axis = tuple(i for i in range(1, len(shape)))
+        sqrt_alpha = jnp.expand_dims(jnp.sqrt(self.alpha_hat[t]), axis=expand_axis)
+        sqrt_one_minus_alpha_hat = jnp.expand_dims(jnp.sqrt(1. - self.alpha_hat[t]), axis=expand_axis)
         return sqrt_alpha * x + sqrt_one_minus_alpha_hat * eps, eps
 
     def setup(self):

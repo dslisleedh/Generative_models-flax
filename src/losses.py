@@ -19,6 +19,16 @@ def kl_divergence(p: jnp.ndarray, q: jnp.ndarray) -> jnp.ndarray:
     return jnp.sum(p * log_div, axis=-1)
 
 
+def generation_loss(d_fake: jnp.ndarray) -> jnp.ndarray:
+    return jnp.mean(binary_cross_entropy(d_fake, jnp.ones_like(d_fake)))
+
+
+def discrimination_loss(d_real: jnp.ndarray, d_fake: jnp.ndarray) -> jnp.ndarray:
+    return jnp.mean(binary_cross_entropy(d_real, jnp.ones_like(d_real))) + jnp.mean(
+        binary_cross_entropy(d_fake, jnp.zeros_like(d_fake))
+    )
+
+
 def consistency_loss(*args):
     loss = []
     for arg in args:
